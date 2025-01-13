@@ -16,7 +16,7 @@ from diffusers.models import AutoencoderKL
 from download import find_model
 from models import DiT_models
 import argparse
-
+from tqdm import tqdm
 
 def main(args):
     # Setup PyTorch:
@@ -46,27 +46,66 @@ def main(args):
     # Labels to condition the model with (feel free to change):
     class_labels = [207, 360, 387, 974, 88, 979, 417, 279]
 
-    # Create sampling noise:
-    n = len(class_labels)
-    z = torch.randn(n, 4, latent_size, latent_size, device=device)
-    y = torch.tensor(class_labels, device=device)
+    if args.classes is not None:
+        class_labels = args.classes
 
-    # Setup classifier-free guidance:
-    z = torch.cat([z, z], 0)
-    y_null = torch.tensor([1000] * n, device=device)
-    y = torch.cat([y, y_null], 0)
-    model_kwargs = dict(y=y, cfg_scale=args.cfg_scale)
+    if args.all_classes is True:
+        class_labels = [i for i in range(1000)]
 
-    # Sample images:
-    samples = diffusion.p_sample_loop(
-        model.forward_with_cfg, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=True, device=device
+    if args.n_samples > 1:
+        for i in tqdm(range(n_samples)):
+            n = len(class_labels)
+            z = torch.randn(n, 4, latent_size, latent_size, device=device)
+            y = torch.tensor(class_labels, device=device)
+
+            # Setup classifier-free guidance:
+            z = torch.cat([z, z], 0)
+            y_null = torch.tensor([1000] * n, device=device)
+            y = torch.cat([y, y_null], 0)
+            model_kwargs = dict(y=y, cfg_scale=args.cfg_scale)
+
+            # Sample images:
+            samples = diffusion.p_sample_loop(
+        model.forward_with_cfg, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=True, device=device,t_start = args.t_start, t_c= args.t_c
     )
-    samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
-    samples = vae.decode(samples / 0.18215).sample
+            samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
+            samples = vae.decode(samples / 0.18215).sample
 
-    # Save and display images:
-    save_image(samples, "sample.png", nrow=4, normalize=True, value_range=(-1, 1))
+            for j in range(samples.size(0)):
+               save_image(samples[i, :, :, :], f'{args.save_dir}/{i}_{j}.png',normalize=True,value_range=(-1,1))
 
+
+    else:
+        
+        # Create sampling noise:
+        n = len(class_labels)
+        z = torch.randn(n, 4, latent_size, latent_size, device=device)
+        y = torch.tensor(class_labels, device=device)
+
+        # Setup classifier-free guidance:
+        z = torch.cat([z, z], 0)
+        y_null = torch.tensor([1000] * n, device=device)
+        y = torch.cat([y, y_null], 0)
+        model_kwargs = dict(y=y, cfg_scale=args.cfg_scale)
+
+        # Sample images:
+        samples = diffusion.p_sample_loop(
+        model.forward_with_cfg, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=True, device=device,t_start = args.t_start, t_c= args.t_c
+    )
+        samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
+        samples = vae.decode(samples / 0.18215).sample
+
+        for j in range(samples.size(0)):
+               save_image(samples[i, :, :, :], f'{args.save_dir}/{i}_{j}.png',normalize=True,value_range=(-1,1))
+
+    
+
+            
+        
+
+
+
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -79,5 +118,12 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--ckpt", type=str, default=None,
                         help="Optional path to a DiT checkpoint (default: auto-download a pre-trained DiT-XL/2 model).")
+    parser.add_argument("--t-start", type=int, default = None)
+    parser.add_argument("--t-c", type=int, default=None)
+    parser.add_argument('--classes','--list', nargs='+', default = None, help = "class list")
+    parser.add_argument("--all-classes",type=Bool, default=False)
+    parser.add_argument("--n-samples", type=int, default = 1)
+    parser.add_argument("--save-dir",type=str,default=None)
+
     args = parser.parse_args()
     main(args)
