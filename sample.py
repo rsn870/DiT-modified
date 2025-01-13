@@ -93,10 +93,45 @@ def main(args):
         model.forward_with_cfg, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=True, device=device,t_start = args.t_start, t_c= args.t_c
     )
         samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
-        samples = vae.decode(samples / 0.18215).sample
 
-        for j in range(samples.size(0)):
-               save_image(samples[i, :, :, :], f'{args.save_dir}/{i}_{j}.png',normalize=True,value_range=(-1,1))
+        
+        if samples.size(0) > 10:
+                for j in range(0,samples.size(0),10):
+                    if j+10 < samples.size(0):
+                       samples_2 = vae.decode(samples[j:j+10,:,:,:] / 0.18215).sample
+                    else:
+                        samples_2 = vae.decode(samples[j:samples.size(0),:,:,:] / 0.18215).sample
+                    for k in range(samples_2.size(0)):
+                        save_image(samples_2[k, :, :, :], f'{args.save_dir}/{i}_{j*10+k}.png',normalize=True,value_range=(-1,1))
+        else:
+            samples = vae.decode(samples / 0.18215).sample
+            for k in range(samples.size(0)):
+                save_image(samples[k, :, :, :], f'{args.save_dir}/{i}_{j*10+k}.png',normalize=True,value_range=(-1,1))
+
+                
+
+      
+
+
+
+
+
+
+                        
+
+
+            
+
+
+
+
+
+                  
+
+              
+
+                   
+
 
     
 
