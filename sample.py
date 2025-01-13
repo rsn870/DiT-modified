@@ -53,7 +53,7 @@ def main(args):
         class_labels = [i for i in range(1000)]
 
     if args.n_samples > 1:
-        for i in tqdm(range(n_samples)):
+        for i in tqdm(range(args.n_samples)):
             n = len(class_labels)
             z = torch.randn(n, 4, latent_size, latent_size, device=device)
             y = torch.tensor(class_labels, device=device)
