@@ -121,7 +121,7 @@ if __name__ == "__main__":
     parser.add_argument("--t-start", type=int, default = None)
     parser.add_argument("--t-c", type=int, default=None)
     parser.add_argument('--classes','--list', nargs='+', default = None, help = "class list")
-    parser.add_argument("--all-classes",type=Bool, default=False)
+    parser.add_argument("--all-classes",type=bool, default=False)
     parser.add_argument("--n-samples", type=int, default = 1)
     parser.add_argument("--save-dir",type=str,default=None)
 
