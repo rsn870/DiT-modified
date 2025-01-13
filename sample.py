@@ -71,6 +71,21 @@ def main(args):
             samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
             samples = vae.decode(samples / 0.18215).sample
 
+            torch.save(samples.cpu(),f"{args.save_dir}/{i}_latents.pt")
+
+        
+            if samples.size(0) > 5:
+                for j in range(0,samples.size(0),5):
+                    if j+5 < samples.size(0):
+                       samples_2 = vae.decode(samples[j:j+5,:,:,:] / 0.18215).sample
+                    else:
+                        samples_2 = vae.decode(samples[j:samples.size(0),:,:,:] / 0.18215).sample
+                    for k in range(samples_2.size(0)):
+                        save_image(samples_2[k, :, :, :], f'{args.save_dir}/{i}_{j*5+k}.png',normalize=True,value_range=(-1,1))
+            else:
+             samples = vae.decode(samples / 0.18215).sample
+
+
             for j in range(samples.size(0)):
                save_image(samples[i, :, :, :], f'{args.save_dir}/{i}_{j}.png',normalize=True,value_range=(-1,1))
 
@@ -94,19 +109,6 @@ def main(args):
     )
         samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
 
-        
-        if samples.size(0) > 10:
-                for j in range(0,samples.size(0),10):
-                    if j+10 < samples.size(0):
-                       samples_2 = vae.decode(samples[j:j+10,:,:,:] / 0.18215).sample
-                    else:
-                        samples_2 = vae.decode(samples[j:samples.size(0),:,:,:] / 0.18215).sample
-                    for k in range(samples_2.size(0)):
-                        save_image(samples_2[k, :, :, :], f'{args.save_dir}/{i}_{j*10+k}.png',normalize=True,value_range=(-1,1))
-        else:
-            samples = vae.decode(samples / 0.18215).sample
-            for k in range(samples.size(0)):
-                save_image(samples[k, :, :, :], f'{args.save_dir}/{i}_{j*10+k}.png',normalize=True,value_range=(-1,1))
 
                 
 
