@@ -471,8 +471,8 @@ class GaussianDiffusion:
         cond_fn=None,
         model_kwargs=None,
         device=None,
-        progress=False,
-    ):
+        progress=False,    
+        ):
         """
         Generate samples from the model and yield intermediate samples from
         each timestep of diffusion.
@@ -569,6 +569,7 @@ class GaussianDiffusion:
         cond_fn=None,
         model_kwargs=None,
         eta=0.0,
+        t_c = None,
     ):
         """
         Sample x_{t+1} from the model using DDIM reverse ODE.
@@ -582,8 +583,14 @@ class GaussianDiffusion:
             denoised_fn=denoised_fn,
             model_kwargs=model_kwargs,
         )
-        if cond_fn is not None:
-            out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
+        if t_c is not None:
+            if cond_fn is not None and t > t_c:
+                out = self.condition_score(cond_fn,out,x,t,model_kwargs=model_kwargs)
+        else :
+            if cond_fn is not None:
+                out = self.condition_score(cond_fn, out, x, t, model_kwargs=model_kwargs)
+            
+        
         # Usually our model outputs epsilon, but we re-derive it
         # in case we used x_start or x_prev prediction.
         eps = (
